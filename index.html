@@ -10,13 +10,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        /* Base styles for the body and layout */
         html, body {
             height: 100%;
         }
         body {
             font-family: 'Kanit', sans-serif;
             background-color: #f4f7f9;
-            background-image:
+            /* Subtle animated gradient background */
+            background-image: 
                 radial-gradient(at 40% 20%, hsla(28,100%,74%,0.1) 0px, transparent 50%),
                 radial-gradient(at 80% 0%, hsla(189,100%,56%,0.1) 0px, transparent 50%),
                 radial-gradient(at 0% 50%, hsla(355,100%,93%,0.1) 0px, transparent 50%),
@@ -34,6 +36,8 @@
             0% { background-position: 0% 0%; }
             100% { background-position: 100% 100%; }
         }
+
+        /* Main container for the dashboard to maintain aspect ratio */
         .dashboard-wrapper {
             width: 100vw;
             height: 100vh;
@@ -44,7 +48,7 @@
         }
         .dashboard-container {
             width: 96vw;
-            max-width: calc(96vh * (16 / 9));
+            max-width: calc(96vh * (16 / 9)); /* Maintain 16:9 aspect ratio */
             height: calc(96vw * (9 / 16));
             max-height: 96vh;
             background: white;
@@ -53,7 +57,7 @@
             border: 1px solid #e2e8f0;
             display: flex;
             flex-direction: column;
-            padding: 2vh 2vw;
+            padding: clamp(1rem, 2vh, 2rem) clamp(1rem, 2vw, 3rem); /* Responsive padding */
             overflow: hidden;
             position: relative;
         }
@@ -61,6 +65,7 @@
             overflow-y: auto;
         }
         
+        /* Confetti animation styles */
         .confetti-container {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             pointer-events: none; overflow: hidden; z-index: 9999;
@@ -72,10 +77,8 @@
         }
         @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
 
-        /* Responsive Font Sizes */
-        h1 {
-            font-size: clamp(5rem, 18vh, 10rem);
-            font-weight: 900;
+        /* Animated gradient for the main title */
+        .animated-gradient {
             background-size: 300% 300%;
             animation: color-shift 8s ease-in-out infinite;
         }
@@ -83,10 +86,8 @@
             0%, 100% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
         }
-        h2 { font-size: clamp(2.5rem, 6vh, 3.5rem); font-weight: 900; }
-        p, label, button, input, textarea { font-size: clamp(1.1rem, 2.8vh, 1.4rem); }
-        
-        /* Animation Styles */
+
+        /* Supernova animation overlay */
         #animation-container {
             position: absolute;
             top: 0; left: 0;
@@ -160,11 +161,17 @@
             margin: 0 auto 0.5rem auto;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
+        /* UPDATED: Changed winner name style for better contrast and readability */
         .winner-name {
             font-weight: 700;
-            color: #333;
+            color: white; /* Changed to white as requested */
+            background: linear-gradient(45deg, #6d28d9, #4f46e5); /* Added a vibrant purple/indigo background */
+            padding: 0.5rem 0.25rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
             word-break: break-all;
-            font-size: clamp(1rem, 2.5vh, 1.3rem);
+            font-size: 1.3rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         @keyframes card-enter {
             from { opacity: 0; transform: translateY(30px) scale(0.95); }
@@ -173,7 +180,9 @@
     </style>
 </head>
 <body>
+    <!-- Container for confetti effect -->
     <div id="confetti-container" class="confetti-container"></div>
+
     <div class="dashboard-wrapper">
         <div class="dashboard-container">
             <!-- Animation Overlay -->
@@ -181,11 +190,12 @@
                 <canvas id="animation-canvas"></canvas>
             </div>
 
-            <header class="text-center">
-                <h1 class="tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500">
+            <!-- Header Section -->
+            <header class="text-center mb-4">
+                <h1 class="font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animated-gradient text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
                     สุ่มผู้โชคดี
                 </h1>
-                <p class="text-gray-500">โปรแกรมสุ่มรางวัลสุดล้ำ</p>
+                <p class="text-gray-500 text-lg sm:text-xl md:text-2xl mt-1">โปรแกรมสุ่มรางวัลสุดล้ำ</p>
             </header>
 
             <div id="content-area" class="flex-grow flex flex-col justify-center items-center">
@@ -193,10 +203,10 @@
                 <main id="setup-screen" class="w-full max-w-lg">
                     <div class="space-y-4">
                         <div>
-                            <label for="participants-list" class="block mb-2 font-bold text-gray-700">วางรายชื่อผู้เข้าร่วม (1 ชื่อ ต่อ 1 บรรทัด)</label>
-                            <textarea id="participants-list" rows="6" placeholder="คัดลอกรายชื่อทั้งหมดมาวางที่นี่..." class="w-full p-3 bg-gray-100 border-2 border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all"></textarea>
+                            <label for="participants-list" class="block mb-2 font-bold text-gray-700 text-lg">วางรายชื่อผู้เข้าร่วม (1 ชื่อ ต่อ 1 บรรทัด)</label>
+                            <textarea id="participants-list" rows="6" placeholder="คัดลอกรายชื่อทั้งหมดมาวางที่นี่..." class="w-full p-3 bg-gray-100 border-2 border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all text-lg"></textarea>
                         </div>
-                        <button id="next-button" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:scale-105 transform transition-transform duration-300 shadow-lg">
+                        <button id="next-button" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:scale-105 transform transition-transform duration-300 shadow-lg text-xl">
                             ไปยังหน้าสุ่มรางวัล
                         </button>
                     </div>
@@ -204,18 +214,18 @@
 
                 <!-- Step 2: Draw Screen -->
                 <div id="draw-screen" class="hidden w-full max-w-lg">
-                     <div class="text-center mb-4">
+                     <div class="text-center mb-4 text-lg">
                         <p class="text-green-600">พร้อมสุ่มจาก <span id="participant-count" class="font-bold">0</span> รายชื่อ</p>
                     </div>
                     <div class="space-y-4">
                          <div>
-                            <label for="winner-count" class="block mb-2 font-bold text-gray-700">จำนวนผู้โชคดี</label>
-                            <input type="number" id="winner-count" value="1" min="1" class="w-full p-3 bg-gray-100 border-2 border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all">
+                            <label for="winner-count" class="block mb-2 font-bold text-gray-700 text-lg">จำนวนผู้โชคดี</label>
+                            <input type="number" id="winner-count" value="1" min="1" class="w-full p-3 bg-gray-100 border-2 border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all text-lg">
                         </div>
-                        <button id="start-button" class="w-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-white font-bold py-3 rounded-lg hover:scale-105 transform transition-transform duration-300 shadow-lg">
+                        <button id="start-button" class="w-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-white font-bold py-3 rounded-lg hover:scale-105 transform transition-transform duration-300 shadow-lg text-xl">
                             เริ่มสุ่มรางวัล!
                         </button>
-                        <button id="start-over-button" class="w-full bg-gray-500 text-white font-bold py-2 rounded-lg hover:bg-gray-600 transition-colors">
+                        <button id="start-over-button" class="w-full bg-gray-500 text-white font-bold py-2 rounded-lg hover:bg-gray-600 transition-colors text-lg">
                             กลับไปหน้าแรก
                         </button>
                     </div>
@@ -223,17 +233,18 @@
             </div>
             
             <!-- Winner Gallery -->
-            <div id="winner-gallery-section" class="hidden">
+            <div id="winner-gallery-section" class="hidden bg-slate-50 rounded-lg p-4">
                 <div class="flex justify-center gap-4 mb-4">
-                    <button id="restart-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transform transition-all duration-300">
+                    <button id="restart-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transform transition-all duration-300 text-lg">
                         สุ่มอีกครั้ง
                     </button>
                 </div>
                 <div id="winner-gallery"></div>
             </div>
 
-            <div id="error-message" class="hidden text-center p-2 bg-red-100 text-red-700 border border-red-400 rounded-lg">
-                <p id="error-text"></p>
+            <!-- Error Message Area -->
+            <div id="error-message" class="hidden text-center p-2 bg-red-100 text-red-700 border border-red-400 rounded-lg mt-4">
+                <p id="error-text" class="text-base"></p>
             </div>
         </div>
     </div>
@@ -269,43 +280,49 @@
 
         // --- Sound Synthesis with Tone.js ---
         function setupSynths() {
-            synth = new Tone.PolySynth(Tone.Synth).toDestination();
-            ambientSynth = new Tone.AMSynth({
-                harmonicity: 1.5,
-                envelope: { attack: 2, decay: 1, sustain: 1, release: 4 },
-                modulationEnvelope: { attack: 2, decay: 0.5, sustain: 1, release: 4 }
-            }).toDestination();
-            ambientSynth.volume.value = -15;
-            novaSynth = new Tone.NoiseSynth({
-                noise: { type: 'pink' },
-                envelope: { attack: 0.01, decay: 1.5, sustain: 0, release: 2 }
-            }).toDestination();
-            novaSynth.volume.value = -5;
-            twinkleSynth = new Tone.FMSynth({
-                harmonicity: 5, modulationIndex: 10,
-                envelope: { attack: 0.01, decay: 0.1, release: 0.2 },
-                modulationEnvelope: { attack: 0.01, decay: 0.05, release: 0.2 }
-            }).toDestination();
-            twinkleSynth.volume.value = -25;
+            try {
+                synth = new Tone.PolySynth(Tone.Synth).toDestination();
+                ambientSynth = new Tone.AMSynth({
+                    harmonicity: 1.5,
+                    envelope: { attack: 2, decay: 1, sustain: 1, release: 4 },
+                    modulationEnvelope: { attack: 2, decay: 0.5, sustain: 1, release: 4 }
+                }).toDestination();
+                ambientSynth.volume.value = -15;
+                novaSynth = new Tone.NoiseSynth({
+                    noise: { type: 'pink' },
+                    envelope: { attack: 0.01, decay: 1.5, sustain: 0, release: 2 }
+                }).toDestination();
+                novaSynth.volume.value = -5;
+                twinkleSynth = new Tone.FMSynth({
+                    harmonicity: 5, modulationIndex: 10,
+                    envelope: { attack: 0.01, decay: 0.1, release: 0.2 },
+                    modulationEnvelope: { attack: 0.01, decay: 0.05, release: 0.2 }
+                }).toDestination();
+                twinkleSynth.volume.value = -25;
+            } catch (e) {
+                console.error("Could not initialize Tone.js synths. Sound will be disabled.", e);
+            }
         }
 
-        function playAmbientSound() {
-            if (ambientSynth) ambientSynth.triggerAttack("C2");
+        function playAmbientSound() { 
+            if (ambientSynth) ambientSynth.triggerAttack("C2"); 
             if (twinkleLoop) twinkleLoop.dispose();
-            twinkleLoop = new Tone.Loop(time => {
-                const note = ['C6', 'E6', 'G6', 'A6'][Math.floor(Math.random() * 4)];
-                twinkleSynth.triggerAttackRelease(note, "32n", time);
-            }, "16n").start(0);
-            Tone.Transport.start();
+            if (twinkleSynth) {
+                twinkleLoop = new Tone.Loop(time => {
+                    const note = ['C6', 'E6', 'G6', 'A6'][Math.floor(Math.random() * 4)];
+                    twinkleSynth.triggerAttackRelease(note, "32n", time);
+                }, "16n").start(0);
+                Tone.Transport.start();
+            }
         }
-        function stopAmbientSound() {
+        function stopAmbientSound() { 
             if (ambientSynth) ambientSynth.triggerRelease();
             if (twinkleLoop) twinkleLoop.stop(0).dispose();
             if (Tone.Transport.state === 'started') Tone.Transport.stop();
         }
         function playNovaSound() { if (novaSynth) novaSynth.triggerAttack(); }
         function playWinnerSound() {
-            if (!synth) setupSynths();
+            if (!synth) return;
             const now = Tone.now();
             synth.triggerAttackRelease("C5", "8n", now);
             synth.triggerAttackRelease("E5", "8n", now + 0.15);
@@ -336,9 +353,9 @@
 
         // --- Supernova Animation Logic ---
         function startSupernovaAnimation(names, newWinners) {
-            const winnerName = newWinners[0];
             animationContainer.classList.add('active');
             playAmbientSound();
+            
             const ctx = animationCanvas.getContext('2d');
             const dpr = window.devicePixelRatio || 1;
             animationCanvas.width = animationContainer.clientWidth * dpr;
@@ -351,112 +368,77 @@
 
             let particles = [];
             class Particle {
-                constructor(name) {
-                    this.name = name;
-                    this.x = Math.random() * W;
-                    this.y = Math.random() * H;
-                    this.vx = 0;
-                    this.vy = 0;
-                    this.radius = Math.random() * 3 + 2;
-                    this.phase = 'scatter'; // scatter, pull, swirl, converge
-                    this.life = 0;
+                constructor() {
+                    this.x = Math.random() * W; this.y = Math.random() * H;
+                    this.vx = 0; this.vy = 0;
+                    this.radius = Math.random() * 2 + 1;
+                    this.phase = 'scatter'; this.life = 0;
                 }
                 update() {
                     this.life++;
-                    const dx = centerX - this.x;
-                    const dy = centerY - this.y;
+                    const dx = centerX - this.x; const dy = centerY - this.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-
-                    if (this.phase === 'scatter') {
-                        if (this.life > 120) this.phase = 'pull';
+                    if (this.phase === 'scatter') { if (this.life > 100) this.phase = 'pull';
                     } else if (this.phase === 'pull') {
-                        this.vx += dx / dist * 0.1;
-                        this.vy += dy / dist * 0.1;
-                        if (this.life > 300) this.phase = 'swirl';
+                        this.vx += dx / dist * 0.1; this.vy += dy / dist * 0.1;
+                        if (this.life > 240) this.phase = 'swirl';
                     } else if (this.phase === 'swirl') {
-                        this.vx += dx / dist * 0.1;
-                        this.vy += dy / dist * 0.1;
-                        this.vx += -dy / dist * 0.2;
-                        this.vy += dx / dist * 0.2;
-                        if (this.life > 450) this.phase = 'converge'; // Shortened swirl time
+                        this.vx += dx / dist * 0.1 + -dy / dist * 0.2;
+                        this.vy += dy / dist * 0.1 + dx / dist * 0.2;
+                        if (this.life > 360) this.phase = 'converge';
                     } else if (this.phase === 'converge') {
-                        this.vx += dx * 0.01;
-                        this.vy += dy * 0.01;
+                        this.vx += dx * 0.01; this.vy += dy * 0.01;
                     }
-                    
-                    this.vx *= 0.96;
-                    this.vy *= 0.96;
-                    this.x += this.vx;
-                    this.y += this.vy;
+                    this.vx *= 0.96; this.vy *= 0.96;
+                    this.x += this.vx; this.y += this.vy;
                 }
                 draw() {
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = 'white';
-                    ctx.fill();
+                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = 'white'; ctx.fill();
                 }
             }
 
-            names.forEach(name => particles.push(new Particle(name)));
+            for(let i = 0; i < 300; i++) particles.push(new Particle());
             let animationFrame = 0;
             let runningName = '';
             let frameCounterForNameChange = 0;
 
             function animate() {
-                ctx.fillStyle = 'rgba(9, 10, 15, 0.1)'; // Fading trails
+                ctx.fillStyle = 'rgba(9, 10, 15, 0.1)';
                 ctx.fillRect(0, 0, W, H);
-                
-                particles.forEach(p => {
-                    p.update();
-                    p.draw();
-                });
+                particles.forEach(p => { p.update(); p.draw(); });
 
-                // Add running names in the center
-                if (animationFrame > 300 && animationFrame < 600) {
+                if (animationFrame < 480) { 
                     frameCounterForNameChange++;
-                    if (frameCounterForNameChange >= 20) {
-                         const randomIndex = Math.floor(Math.random() * names.length);
-                         runningName = names[randomIndex];
+                    if (frameCounterForNameChange >= 3) {
+                         runningName = names[Math.floor(Math.random() * names.length)];
                          frameCounterForNameChange = 0;
                     }
-                   
                     if (runningName) {
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                        ctx.font = `700 clamp(2rem, 5vh, 3rem) Kanit`;
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
+                        ctx.shadowColor = '#eab308'; ctx.shadowBlur = 15;
+                        ctx.fillStyle = '#fde047';
+                        const runningFontSize = Math.min(W, H) * 0.08;
+                        ctx.font = `700 ${runningFontSize}px Kanit`;
+                        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
                         ctx.fillText(runningName, centerX, centerY);
+                        ctx.shadowBlur = 0;
                     }
                 }
                 
                 animationFrame++;
-                if (animationFrame < 600) { // Approx 10 seconds
+                if (animationFrame < 480) {
                     mainAnimationId = requestAnimationFrame(animate);
                 } else {
-                    // Final reveal
-                    stopAmbientSound();
-                    playNovaSound();
+                    stopAmbientSound(); playNovaSound();
                     
                     let novaRadius = 0;
                     const novaInterval = setInterval(() => {
                         ctx.fillStyle = `rgba(255, 255, 255, ${1 - novaRadius / (W/2)})`;
-                        ctx.beginPath();
-                        ctx.arc(centerX, centerY, novaRadius, 0, Math.PI * 2);
-                        ctx.fill();
+                        ctx.beginPath(); ctx.arc(centerX, centerY, novaRadius, 0, Math.PI * 2); ctx.fill();
                         novaRadius += 25;
                         if (novaRadius > W) {
                             clearInterval(novaInterval);
-                            
-                            ctx.fillStyle = '#8b5cf6';
-                            ctx.font = `900 clamp(7rem, 45vh, 30rem) Kanit`;
-                            ctx.textAlign = 'center';
-                            ctx.textBaseline = 'middle';
-                            ctx.shadowColor = '#c4b5fd';
-                            ctx.shadowBlur = 40;
-                            ctx.fillText(winnerName, centerX, centerY);
-                            ctx.shadowBlur = 0;
-                            
-                            setTimeout(() => endRandomization(newWinners), 5000);
+                            revealWinner(newWinners);
                         }
                     }, 16);
                 }
@@ -464,10 +446,69 @@
             animate();
         }
 
+        function revealWinner(newWinners) {
+            const winnerName = newWinners.length > 1 ? `${newWinners.length} ผู้โชคดี` : newWinners[0];
+            const W = animationCanvas.clientWidth;
+            const H = animationCanvas.clientHeight;
+            const centerX = W / 2;
+            const centerY = H / 2;
+            const ctx = animationCanvas.getContext('2d');
+            
+            let revealFrame = 0;
+            let shockwaveRadius = 0;
+            let shockwaveOpacity = 1;
+
+            function revealLoop() {
+                ctx.fillStyle = '#090a0f';
+                ctx.fillRect(0, 0, W, H);
+
+                const rays = 60;
+                for (let i = 0; i < rays; i++) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `hsla(260, 100%, 80%, ${Math.max(0, 0.3 * Math.sin(revealFrame * 0.02 + (i / rays) * Math.PI))})`;
+                    ctx.moveTo(centerX, centerY);
+                    const angle = (i / rays) * Math.PI * 2 + revealFrame * 0.005;
+                    ctx.lineTo(centerX + Math.cos(angle) * W, centerY + Math.sin(angle) * H);
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+
+                if (shockwaveOpacity > 0) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${shockwaveOpacity})`;
+                    ctx.lineWidth = 5;
+                    ctx.arc(centerX, centerY, shockwaveRadius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    shockwaveRadius += 5;
+                    shockwaveOpacity -= 0.01;
+                }
+
+                let finalFontSize = H * 0.25; 
+                ctx.font = `900 ${finalFontSize}px Kanit`;
+                while (ctx.measureText(winnerName).width > W * 0.9 && finalFontSize > 10) {
+                    finalFontSize *= 0.95;
+                    ctx.font = `900 ${finalFontSize}px Kanit`;
+                }
+                ctx.fillStyle = '#fde047';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = '#f59e0b';
+                ctx.shadowBlur = 40;
+                ctx.fillText(winnerName, centerX, centerY);
+                ctx.shadowBlur = 0;
+
+                revealFrame++;
+                mainAnimationId = requestAnimationFrame(revealLoop);
+            }
+            
+            playWinnerSound();
+            revealLoop();
+            setTimeout(() => endRandomization(newWinners), 3000);
+        }
+
         function endRandomization(newWinners) {
             cancelAnimationFrame(mainAnimationId);
             animationContainer.classList.remove('active');
-            playWinnerSound();
             createConfetti();
             
             winners = [...winners, ...newWinners];
@@ -491,13 +532,23 @@
                 winnerGallery.appendChild(card);
             });
         }
+        
+        function shuffleArray(array) {
+            let currentIndex = array.length, randomIndex;
+            while (currentIndex !== 0) {
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex--;
+                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+            }
+            return array;
+        }
 
         // --- Event Listeners ---
         nextButton.addEventListener('click', () => {
             hideError();
             const namesText = participantsListInput.value.trim();
             if (!namesText) { showError("กรุณาวางรายชื่อผู้เข้าร่วม"); return; }
-            participants = [...new Set(namesText.split('\n').map(name => name.trim()).filter(name => name.length > 0))];
+            participants = [...new Set(namesText.split('\n').map(name => name.trim()).filter(Boolean))];
             if (participants.length === 0) { showError("ไม่พบรายชื่อที่ถูกต้อง"); return; }
             
             remainingParticipants = [...participants];
@@ -511,18 +562,17 @@
         });
 
         startButton.addEventListener('click', async () => {
-            await Tone.start();
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+            }
             hideError();
             
             const winnerCount = parseInt(winnerCountInput.value, 10);
+            if (isNaN(winnerCount) || winnerCount <= 0) { showError("จำนวนผู้โชคดีต้องเป็น 1 คนขึ้นไป"); return; }
             if (winnerCount > remainingParticipants.length) { showError(`จำนวนผู้โชคดี (${winnerCount}) มากกว่ารายชื่อที่เหลือ (${remainingParticipants.length})`); return; }
-            if (winnerCount <= 0) { showError("จำนวนผู้โชคดีต้องเป็น 1 คนขึ้นไป"); return; }
 
-            const shuffled = [...remainingParticipants].sort(() => 0.5 - Math.random());
-            const newWinners = [];
-            for(let i=0; i<winnerCount; i++) {
-                if(shuffled.length > 0) newWinners.push(shuffled.shift());
-            }
+            const shuffled = shuffleArray([...remainingParticipants]);
+            const newWinners = shuffled.slice(0, winnerCount);
 
             drawScreen.classList.add('hidden');
             winnerGallerySection.classList.add('hidden');
@@ -551,10 +601,11 @@
             remainingParticipants = [];
             winners = [];
             participantsListInput.value = '';
+            winnerCountInput.value = '1';
             hideError();
         });
 
-        // Initial setup
+        // --- Initial setup ---
         setupSynths();
     </script>
 </body>
