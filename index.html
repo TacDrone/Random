@@ -125,11 +125,12 @@
             overflow-y: auto;
             height: 100%;
         }
+        /* UPDATED: Increased winner card size */
         .winner-card {
             background: linear-gradient(145deg, #ffffff, #e9eef3);
             border-radius: 12px;
-            padding: 1rem;
-            width: clamp(180px, 20vw, 250px);
+            padding: 1.5rem; /* Increased padding */
+            width: clamp(240px, 22vw, 320px); /* Increased width */
             text-align: center;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             position: relative;
@@ -147,30 +148,31 @@
             border-radius: inherit;
             background: linear-gradient(45deg, #fede71, #ffc107, #d9534f, #a78bfa, #60a5fa);
         }
+        /* UPDATED: Increased rank element size */
         .winner-rank {
             background: linear-gradient(45deg, #a78bfa, #60a5fa);
             color: white;
             border-radius: 50%;
-            width: 2.5rem;
-            height: 2.5rem;
+            width: 3rem; /* Increased size */
+            height: 3rem; /* Increased size */
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 900;
-            font-size: 1.2rem;
-            margin: 0 auto 0.5rem auto;
+            font-size: 1.5rem; /* Increased font size */
+            margin: 0 auto 0.75rem auto; /* Increased margin */
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        /* UPDATED: Changed winner name style for better contrast and readability */
+        /* UPDATED: Increased winner name font size and padding */
         .winner-name {
             font-weight: 700;
-            color: white; /* Changed to white as requested */
-            background: linear-gradient(45deg, #6d28d9, #4f46e5); /* Added a vibrant purple/indigo background */
-            padding: 0.5rem 0.25rem;
+            color: white;
+            background: linear-gradient(45deg, #6d28d9, #4f46e5);
+            padding: 0.75rem 0.5rem; /* Increased padding */
             border-radius: 8px;
-            margin-top: 0.5rem;
+            margin-top: 0.75rem; /* Increased margin */
             word-break: break-all;
-            font-size: 1.3rem;
+            font-size: 1.5rem; /* Increased font size */
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         @keyframes card-enter {
@@ -218,7 +220,7 @@
                         <p class="text-green-600">พร้อมสุ่มจาก <span id="participant-count" class="font-bold">0</span> รายชื่อ</p>
                     </div>
                     <div class="space-y-4">
-                         <div>
+                        <div>
                             <label for="winner-count" class="block mb-2 font-bold text-gray-700 text-lg">จำนวนผู้โชคดี</label>
                             <input type="number" id="winner-count" value="1" min="1" class="w-full p-3 bg-gray-100 border-2 border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all text-lg">
                         </div>
@@ -446,8 +448,11 @@
             animate();
         }
 
+        /**
+         * MODIFIED FUNCTION: This function now displays all winner names,
+         * adjusting font size to fit them all on the screen.
+         */
         function revealWinner(newWinners) {
-            const winnerName = newWinners.length > 1 ? `${newWinners.length} ผู้โชคดี` : newWinners[0];
             const W = animationCanvas.clientWidth;
             const H = animationCanvas.clientHeight;
             const centerX = W / 2;
@@ -462,6 +467,7 @@
                 ctx.fillStyle = '#090a0f';
                 ctx.fillRect(0, 0, W, H);
 
+                // Draw background rays
                 const rays = 60;
                 for (let i = 0; i < rays; i++) {
                     ctx.beginPath();
@@ -473,6 +479,7 @@
                     ctx.stroke();
                 }
 
+                // Draw expanding shockwave
                 if (shockwaveOpacity > 0) {
                     ctx.beginPath();
                     ctx.strokeStyle = `rgba(255, 255, 255, ${shockwaveOpacity})`;
@@ -483,19 +490,45 @@
                     shockwaveOpacity -= 0.01;
                 }
 
-                let finalFontSize = H * 0.25; 
-                ctx.font = `900 ${finalFontSize}px Kanit`;
-                while (ctx.measureText(winnerName).width > W * 0.9 && finalFontSize > 10) {
-                    finalFontSize *= 0.95;
+                // --- START: MODIFIED NAME DISPLAY LOGIC ---
+
+                // 1. Find the longest name to determine width constraints.
+                const longestName = newWinners.reduce((a, b) => (a.length > b.length ? a : b), "");
+                
+                // 2. Start with a reasonable font size.
+                let finalFontSize = H * 0.2; 
+
+                // 3. Loop to shrink the font size until it fits both width and height constraints.
+                while (finalFontSize > 10) {
                     ctx.font = `900 ${finalFontSize}px Kanit`;
+                    const textWidth = ctx.measureText(longestName).width;
+                    const totalTextHeight = newWinners.length * (finalFontSize * 1.2); // 1.2 provides line spacing
+
+                    if (textWidth < W * 0.9 && totalTextHeight < H * 0.9) {
+                        break; // The font size is good, so we exit the loop.
+                    }
+                    finalFontSize *= 0.95; // Reduce font size and check again.
                 }
+
+                // 4. Set text styles.
                 ctx.fillStyle = '#fde047';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.shadowColor = '#f59e0b';
                 ctx.shadowBlur = 40;
-                ctx.fillText(winnerName, centerX, centerY);
+
+                // 5. Calculate the starting Y position to vertically center the block of names.
+                const lineHeight = finalFontSize * 1.2;
+                const totalHeight = (newWinners.length - 1) * lineHeight;
+                const startY = centerY - totalHeight / 2;
+
+                // 6. Draw each winner's name on a new line.
+                newWinners.forEach((name, index) => {
+                    ctx.fillText(name, centerX, startY + (index * lineHeight));
+                });
+
                 ctx.shadowBlur = 0;
+                // --- END: MODIFIED NAME DISPLAY LOGIC ---
 
                 revealFrame++;
                 mainAnimationId = requestAnimationFrame(revealLoop);
@@ -503,7 +536,8 @@
             
             playWinnerSound();
             revealLoop();
-            setTimeout(() => endRandomization(newWinners), 3000);
+            // Increased timeout to 5 seconds to give more time to read the names.
+            setTimeout(() => endRandomization(newWinners), 5000);
         }
 
         function endRandomization(newWinners) {
