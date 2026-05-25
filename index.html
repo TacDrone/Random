@@ -3,644 +3,498 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random</title>
+    <title>เกมสุ่มไพ่ยิปซีพลัง AI - เต้น 45 วินาที!</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;700;900&display=swap" rel="stylesheet">
-    <style>
-        /* Base styles for the body and layout */
-        html, body {
-            height: 100%;
-        }
-        body {
-            font-family: 'Kanit', sans-serif;
-            background-color: #f4f7f9;
-            /* Subtle animated gradient background */
-            background-image: 
-                radial-gradient(at 40% 20%, hsla(28,100%,74%,0.1) 0px, transparent 50%),
-                radial-gradient(at 80% 0%, hsla(189,100%,56%,0.1) 0px, transparent 50%),
-                radial-gradient(at 0% 50%, hsla(355,100%,93%,0.1) 0px, transparent 50%),
-                radial-gradient(at 80% 50%, hsla(340,100%,76%,0.1) 0px, transparent 50%),
-                radial-gradient(at 0% 100%, hsla(22,100%,77%,0.1) 0px, transparent 50%),
-                radial-gradient(at 80% 100%, hsla(242,100%,70%,0.1) 0px, transparent 50%),
-                radial-gradient(at 0% 0%, hsla(343,100%,76%,0.1) 0px, transparent 50%);
-            color: #333;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: subtle-bg 20s ease infinite alternate;
-        }
-        @keyframes subtle-bg {
-            0% { background-position: 0% 0%; }
-            100% { background-position: 100% 100%; }
-        }
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- TensorFlow.js & Pose Detection (Multi-Person) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
 
-        /* Main container for the dashboard to maintain aspect ratio */
-        .dashboard-wrapper {
-            width: 100vw;
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #111827; /* พื้นหลังด้านนอกสุด (สีดำ/เทาเข้ม) */
+            margin: 0;
             height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 2vh;
+            overflow: hidden; /* ล็อกการเลื่อนหน้าจอ */
         }
-        .dashboard-container {
-            width: 96vw;
-            max-width: calc(96vh * (16 / 9)); /* Maintain 16:9 aspect ratio */
-            height: calc(96vw * (9 / 16));
-            max-height: 96vh;
-            background: white;
-            border-radius: 1.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            border: 1px solid #e2e8f0;
+
+        #game-container {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            max-width: 100vw;
+            max-height: 100vh;
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            position: relative;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            padding: clamp(1rem, 2vh, 2rem) clamp(1rem, 2vw, 3rem); /* Responsive padding */
-            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        /* รองรับการย่อขยายให้รักษาสัดส่วน 16:9 เสมอ */
+        @media (min-aspect-ratio: 16/9) {
+            #game-container { width: calc(100vh * 16 / 9); }
+        }
+        @media (max-aspect-ratio: 16/9) {
+            #game-container { height: calc(100vw * 9 / 16); }
+        }
+
+        .bg-cute {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+        }
+
+        /* Card Flip Animation */
+        .card-container {
+            perspective: 1000px;
+        }
+        .card-inner {
             position: relative;
-        }
-        #content-area {
-            overflow-y: auto;
-        }
-        
-        /* Confetti animation styles */
-        .confetti-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; overflow: hidden; z-index: 9999;
-        }
-        .confetti {
-            position: absolute; width: 10px; height: 10px;
-            opacity: 0.9;
-            animation: fall 5s linear infinite;
-        }
-        @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
-
-        /* Animated gradient for the main title */
-        .animated-gradient {
-            background-size: 300% 300%;
-            animation: color-shift 8s ease-in-out infinite;
-        }
-        @keyframes color-shift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-        }
-
-        /* Supernova animation overlay */
-        #animation-container {
-            position: absolute;
-            top: 0; left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
-            opacity: 0;
-            transition: opacity 0.5s ease-in-out;
-            pointer-events: none;
-            z-index: 50;
-        }
-        #animation-container.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-        #animation-canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Winner Gallery Styles */
-        #winner-gallery-section {
-            flex-grow: 1;
-            width: 100%;
-            overflow: hidden;
-            padding-top: 1vh;
-        }
-        #winner-gallery {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 1rem;
-            padding: 1rem;
-            overflow-y: auto;
-            height: 100%;
-        }
-        /* UPDATED: Increased winner card size */
-        .winner-card {
-            background: linear-gradient(145deg, #ffffff, #e9eef3);
-            border-radius: 12px;
-            padding: 1.5rem; /* Increased padding */
-            width: clamp(240px, 22vw, 320px); /* Increased width */
             text-align: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            position: relative;
-            border: 2px solid transparent;
-            background-clip: padding-box;
-            opacity: 0;
-            animation: card-enter 0.6s ease-out forwards;
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-style: preserve-3d;
         }
-        .winner-card::before {
-            content: '';
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
             position: absolute;
-            top: 0; right: 0; bottom: 0; left: 0;
-            z-index: -1;
-            margin: -2px;
-            border-radius: inherit;
-            background: linear-gradient(45deg, #fede71, #ffc107, #d9534f, #a78bfa, #60a5fa);
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-        /* UPDATED: Increased rank element size */
-        .winner-rank {
-            background: linear-gradient(45deg, #a78bfa, #60a5fa);
-            color: white;
-            border-radius: 50%;
-            width: 3rem; /* Increased size */
-            height: 3rem; /* Increased size */
+        .card-back {
+            transform: rotateY(180deg);
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+        .card-front {
+            background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900;
-            font-size: 1.5rem; /* Increased font size */
-            margin: 0 auto 0.75rem auto; /* Increased margin */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 8px solid rgba(255,255,255,0.5);
         }
-        /* UPDATED: Increased winner name font size and padding */
-        .winner-name {
-            font-weight: 700;
-            color: white;
-            background: linear-gradient(45deg, #6d28d9, #4f46e5);
-            padding: 0.75rem 0.5rem; /* Increased padding */
-            border-radius: 8px;
-            margin-top: 0.75rem; /* Increased margin */
-            word-break: break-all;
-            font-size: 1.5rem; /* Increased font size */
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        .card-pattern {
+            background-image: radial-gradient(white 15%, transparent 16%), radial-gradient(white 15%, transparent 16%);
+            background-size: 30px 30px;
+            background-position: 0 0, 15px 15px;
+            opacity: 0.3;
+            width: 100%;
+            height: 100%;
+            position: absolute;
         }
-        @keyframes card-enter {
-            from { opacity: 0; transform: translateY(30px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+
+        /* Shake animation when dancing */
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
         }
+        .shake-active {
+            animation: shake 0.5s;
+            animation-iteration-count: infinite;
+        }
+
+        /* Hide Views */
+        .hidden-view { display: none !important; }
+
+        video { transform: scaleX(-1); }
+        canvas { transform: scaleX(-1); object-fit: contain; }
     </style>
 </head>
-<body>
-    <!-- Container for confetti effect -->
-    <div id="confetti-container" class="confetti-container"></div>
+<body class="text-gray-800">
 
-    <div class="dashboard-wrapper">
-        <div class="dashboard-container">
-            <!-- Animation Overlay -->
-            <div id="animation-container">
-                <canvas id="animation-canvas"></canvas>
-            </div>
+    <!-- คอนเทนเนอร์หลักล็อกสัดส่วน 16:9 -->
+    <div id="game-container">
 
-            <!-- Header Section -->
-            <header class="text-center mb-4">
-                <h1 class="font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 animated-gradient text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
-                    สุ่มผู้โชคดี
+        <!-- Header -->
+        <header class="bg-white/80 backdrop-blur-md shadow-sm z-50 shrink-0">
+            <div class="w-full px-4 py-2 md:py-3 flex justify-between items-center">
+                <h1 class="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-pink-500">
+                    ✨ เกมสุ่มโชคชะตาไพ่ยิปซี
                 </h1>
-                <p class="text-gray-500 text-lg sm:text-xl md:text-2xl mt-1">Presented by Department of Physics | CRMA</p>
-            </header>
-
-            <div id="content-area" class="flex-grow flex flex-col justify-center items-center">
-                <!-- Step 1: Setup Screen -->
-                <main id="setup-screen" class="w-full max-w-lg">
-                    <div class="space-y-4">
-                        <div>
-                            <label for="participants-list" class="block mb-2 font-bold text-gray-700 text-lg">วางรายชื่อผู้เข้าร่วม (1 ชื่อ ต่อ 1 บรรทัด)</label>
-                            <textarea id="participants-list" rows="6" placeholder="คัดลอกรายชื่อทั้งหมดมาวางที่นี่..." class="w-full p-3 bg-gray-100 border-2 border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all text-lg"></textarea>
-                        </div>
-                        <button id="next-button" class="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 rounded-lg hover:scale-105 transform transition-transform duration-300 shadow-lg text-xl">
-                            ไปยังหน้าสุ่มรางวัล
-                        </button>
-                    </div>
-                </main>
-
-                <!-- Step 2: Draw Screen -->
-                <div id="draw-screen" class="hidden w-full max-w-lg">
-                     <div class="text-center mb-4 text-lg">
-                        <p class="text-green-600">พร้อมสุ่มจาก <span id="participant-count" class="font-bold">0</span> รายชื่อ</p>
-                    </div>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="winner-count" class="block mb-2 font-bold text-gray-700 text-lg">จำนวนผู้โชคดี</label>
-                            <input type="number" id="winner-count" value="1" min="1" class="w-full p-3 bg-gray-100 border-2 border-gray-300 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-400 transition-all text-lg">
-                        </div>
-                        <button id="start-button" class="w-full bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 text-white font-bold py-3 rounded-lg hover:scale-105 transform transition-transform duration-300 shadow-lg text-xl">
-                            เริ่มสุ่มรางวัล!
-                        </button>
-                        <button id="start-over-button" class="w-full bg-gray-500 text-white font-bold py-2 rounded-lg hover:bg-gray-600 transition-colors text-lg">
-                            กลับไปหน้าแรก
-                        </button>
-                    </div>
-                </div>
             </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-grow flex items-center justify-center p-2 md:p-4 relative w-full overflow-hidden">
             
-            <!-- Winner Gallery -->
-            <div id="winner-gallery-section" class="hidden bg-slate-50 rounded-lg p-4">
-                <div class="flex justify-center gap-4 mb-4">
-                    <button id="restart-button" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transform transition-all duration-300 text-lg">
-                        สุ่มอีกครั้ง
-                    </button>
-                </div>
-                <div id="winner-gallery"></div>
+            <!-- View 1: Start Screen -->
+            <div id="view-start" class="text-center bg-white p-6 md:p-8 rounded-3xl shadow-xl w-full max-w-lg border border-pink-100 flex flex-col items-center justify-center max-h-full">
+                <div class="text-5xl md:text-6xl mb-4">🔮</div>
+                <h2 class="text-2xl md:text-3xl font-bold mb-3 text-purple-700">ยินดีต้อนรับสู่ห้องเรียนเวทมนตร์</h2>
+                <p class="text-gray-600 mb-6 text-sm md:text-base">
+                    เตรียมตัวให้พร้อม! กติกาคือคุณและเพื่อนๆ ต้อง <strong class="text-pink-500">"เต้นหน้ากล้องเป็นเวลา 45 วินาที"</strong> 
+                    เพื่อชาร์จพลังงานและเขย่าไพ่ยิปซีศักดิ์สิทธิ์ หากทุกคนหยุดเต้น เวลาจะหยุดเดิน!
+                </p>
+                <button id="btn-start" class="bg-cute text-white text-lg md:text-xl font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition transform duration-200 w-full">
+                    📸 เปิดกล้องและเริ่มเต้นเลย!
+                </button>
             </div>
 
-            <!-- Error Message Area -->
-            <div id="error-message" class="hidden text-center p-2 bg-red-100 text-red-700 border border-red-400 rounded-lg mt-4">
-                <p id="error-text" class="text-base"></p>
+            <!-- View 2: Loading AI -->
+            <div id="view-loading" class="hidden-view text-center bg-white p-8 rounded-3xl shadow-xl w-full max-w-lg flex flex-col items-center justify-center">
+                <div class="animate-spin text-5xl mb-6 text-pink-400">💫</div>
+                <h2 class="text-xl md:text-2xl font-bold text-gray-700">กำลังเรียก AI ตรวจจับหลายคน...</h2>
+                <p class="text-gray-500 mt-2 text-sm md:text-base">กรุณารอสักครู่และอนุญาตการเข้าถึงกล้องเว็บแคมของคุณ</p>
             </div>
-        </div>
+
+            <!-- View 3: Dancing / Tracking -->
+            <div id="view-dance" class="hidden-view w-full h-full bg-white p-3 md:p-4 rounded-2xl md:rounded-3xl shadow-xl flex flex-row gap-2 md:gap-4 items-center overflow-hidden">
+                
+                <!-- Camera / Canvas Container -->
+                <div class="relative w-2/3 h-full bg-gray-900 rounded-xl md:rounded-2xl overflow-hidden shadow-inner flex items-center justify-center">
+                    <video id="video-element" class="hidden w-full h-full object-cover"></video>
+                    <canvas id="output-canvas" class="w-full h-full"></canvas>
+                    
+                    <!-- Status Overlay -->
+                    <div class="absolute top-2 left-2 md:top-4 md:left-4 bg-white/90 backdrop-blur px-3 py-1.5 md:px-4 md:py-2 rounded-full shadow font-bold flex items-center gap-2 z-10">
+                        <span id="dance-status-icon" class="text-lg md:text-xl">🛑</span>
+                        <span id="dance-status-text" class="text-gray-700 text-xs md:text-sm whitespace-nowrap">รอการเคลื่อนไหว...</span>
+                    </div>
+                </div>
+
+                <!-- UI & Progress -->
+                <div class="w-1/3 h-full flex flex-col items-center justify-center p-1 md:p-2">
+                    <div class="w-20 h-28 md:w-28 md:h-40 card-container mb-2 md:mb-4 relative shrink-0">
+                        <div class="card-inner" id="shuffle-card">
+                            <div class="card-front flex flex-col">
+                                <div class="card-pattern"></div>
+                                <span class="text-2xl md:text-4xl relative z-10 text-white font-bold">?</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-base md:text-xl font-bold text-center mb-1 shrink-0">เต้นเพื่อเขย่าไพ่!</h3>
+                    
+                    <!-- Circular/Text Countdown -->
+                    <div class="text-3xl md:text-5xl font-black text-pink-500 mb-1 md:mb-2 font-mono tracking-tighter shrink-0" id="time-display">
+                        45.0
+                    </div>
+                    <p class="text-gray-500 mb-2 md:mb-3 text-xs md:text-sm shrink-0">วินาที</p>
+
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-200 rounded-full h-2 md:h-3 mb-1 md:mb-2 overflow-hidden shadow-inner shrink-0">
+                        <div id="progress-bar" class="bg-gradient-to-r from-pink-400 to-purple-500 h-full rounded-full transition-all duration-100 ease-linear" style="width: 0%"></div>
+                    </div>
+                    <p class="text-[10px] md:text-xs text-gray-400 text-center shrink-0 leading-tight">ต้องขยับตัวต่อเนื่องเพื่อชาร์จพลัง</p>
+                </div>
+            </div>
+
+            <!-- View 4: Result -->
+            <div id="view-result" class="hidden-view w-full h-full flex items-center justify-center p-4">
+                <div class="card-container w-full max-w-xs md:max-w-sm h-full max-h-[90%] md:max-h-[85%]" id="result-card-container">
+                    <div class="card-inner" id="result-card-inner">
+                        <div class="card-front">
+                            <div class="card-pattern"></div>
+                            <div class="text-5xl md:text-6xl text-white">✨</div>
+                        </div>
+                        <div class="card-back border-4 border-pink-200 bg-pink-50 p-4 flex flex-col justify-between items-center text-center">
+                            <div class="flex-grow flex flex-col items-center justify-center w-full">
+                                <div id="result-icon" class="text-5xl md:text-6xl mb-2">🃏</div>
+                                <h3 id="result-name" class="text-lg md:text-xl font-bold text-purple-800 mb-3 leading-tight">ชื่อไพ่</h3>
+                                
+                                <div class="bg-white p-3 md:p-4 rounded-xl shadow-sm w-full border border-pink-100 relative">
+                                    <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-pink-400 text-white text-[10px] md:text-xs font-bold px-2 py-1 rounded-full whitespace-nowrap">คำสั่งจากไพ่</div>
+                                    <p id="result-rule" class="text-gray-700 text-sm md:text-base font-medium mt-2">
+                                        กติกา
+                                    </p>
+                                </div>
+                            </div>
+
+                            <button id="btn-restart" class="mt-4 bg-purple-600 text-white font-bold py-2 px-6 rounded-full shadow hover:bg-purple-700 transition w-full shrink-0 text-sm md:text-base">
+                                เล่นอีกครั้ง (สุ่มใหม่)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
     <script>
-        // --- DOM Elements ---
-        const participantsListInput = document.getElementById('participants-list');
-        const winnerCountInput = document.getElementById('winner-count');
-        const nextButton = document.getElementById('next-button');
-        const startButton = document.getElementById('start-button');
-        const restartButton = document.getElementById('restart-button');
-        const startOverButton = document.getElementById('start-over-button');
+        // --- 1. Tarot Cards Database ---
+        const tarotCards = [
+            { id: 1, name: "The Fool (เด็กน้อยจอมซน)", rule: "ถ้าได้ไพ่ใบนี้แล้ว ต้องเรื่องตลกให้ฟัง 1 เรื่อง แล้วถ้าตั้งใจเรียน จะปล่อยก่อนเวลา 30 นาที", icon: "🃏" },
+            { id: 2, name: "The Magician (ผู้วิเศษตัวน้อย)", rule: "ถ้าได้ไพ่ใบนี้แล้วร้องเพลง จะปล่อยก่อนเวลา 30 นาที", icon: "🪄" },
+            { id: 3, name: "The High Priestess (นักบวชหญิงสุดคิวท์)", rule: "ถ้าได้ไพ่ใบนี้แล้ว ไม่ตั้งใจเรียน จะสอนจนหมดคาบ", icon: "🔮" },
+            { id: 29, name: "Three of Cups (ปาร์ตี้ชาจิ๋ว)", rule: "วันนี้เรียนชิลๆ ใครเล่าเรื่องตลกให้ฟัง 1 เรื่องผ่าน จะปล่อยก่อนเวลา 30 นาท", icon: "🍵" },
+        ];
+
+        // --- 2. Variables & Elements ---
+        const viewStart = document.getElementById('view-start');
+        const viewLoading = document.getElementById('view-loading');
+        const viewDance = document.getElementById('view-dance');
+        const viewResult = document.getElementById('view-result');
         
-        const setupScreen = document.getElementById('setup-screen');
-        const drawScreen = document.getElementById('draw-screen');
-        const errorMessage = document.getElementById('error-message');
-        const errorText = document.getElementById('error-text');
-        const winnerGallerySection = document.getElementById('winner-gallery-section');
-        const winnerGallery = document.getElementById('winner-gallery');
+        const videoElement = document.getElementById('video-element');
+        const canvasElement = document.getElementById('output-canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        
+        const timeDisplay = document.getElementById('time-display');
+        const progressBar = document.getElementById('progress-bar');
+        const danceStatusIcon = document.getElementById('dance-status-icon');
+        const danceStatusText = document.getElementById('dance-status-text');
+        const shuffleCard = document.getElementById('shuffle-card');
 
-        const participantCountEl = document.getElementById('participant-count');
-        const animationContainer = document.getElementById('animation-container');
-        const animationCanvas = document.getElementById('animation-canvas');
-        const confettiContainer = document.getElementById('confetti-container');
+        let detector = null;
+        let cameraStream = null;
+        
+        const DANCE_TARGET_TIME = 45; // ปรับเป็น 45 วินาที
+        let currentDanceTime = 0;
+        let isMoving = false;
+        let previousPoses = [];
+        let gameActive = false;
+        let lastTimestamp = 0;
 
-        // --- State ---
-        let participants = [];
-        let remainingParticipants = [];
-        let winners = [];
-        let synth, ambientSynth, novaSynth, twinkleSynth;
-        let mainAnimationId;
-        let twinkleLoop;
+        // --- 3. UI Navigation Functions ---
+        function showView(viewId) {
+            [viewStart, viewLoading, viewDance, viewResult].forEach(v => v.classList.add('hidden-view'));
+            document.getElementById(viewId).classList.remove('hidden-view');
+        }
 
-        // --- Sound Synthesis with Tone.js ---
-        function setupSynths() {
+        // --- 4. AI & Camera Initialization (TensorFlow.js MoveNet) ---
+        async function initializeAI() {
+            showView('view-loading');
+            
             try {
-                synth = new Tone.PolySynth(Tone.Synth).toDestination();
-                ambientSynth = new Tone.AMSynth({
-                    harmonicity: 1.5,
-                    envelope: { attack: 2, decay: 1, sustain: 1, release: 4 },
-                    modulationEnvelope: { attack: 2, decay: 0.5, sustain: 1, release: 4 }
-                }).toDestination();
-                ambientSynth.volume.value = -15;
-                novaSynth = new Tone.NoiseSynth({
-                    noise: { type: 'pink' },
-                    envelope: { attack: 0.01, decay: 1.5, sustain: 0, release: 2 }
-                }).toDestination();
-                novaSynth.volume.value = -5;
-                twinkleSynth = new Tone.FMSynth({
-                    harmonicity: 5, modulationIndex: 10,
-                    envelope: { attack: 0.01, decay: 0.1, release: 0.2 },
-                    modulationEnvelope: { attack: 0.01, decay: 0.05, release: 0.2 }
-                }).toDestination();
-                twinkleSynth.volume.value = -25;
-            } catch (e) {
-                console.error("Could not initialize Tone.js synths. Sound will be disabled.", e);
-            }
-        }
-
-        function playAmbientSound() { 
-            if (ambientSynth) ambientSynth.triggerAttack("C2"); 
-            if (twinkleLoop) twinkleLoop.dispose();
-            if (twinkleSynth) {
-                twinkleLoop = new Tone.Loop(time => {
-                    const note = ['C6', 'E6', 'G6', 'A6'][Math.floor(Math.random() * 4)];
-                    twinkleSynth.triggerAttackRelease(note, "32n", time);
-                }, "16n").start(0);
-                Tone.Transport.start();
-            }
-        }
-        function stopAmbientSound() { 
-            if (ambientSynth) ambientSynth.triggerRelease();
-            if (twinkleLoop) twinkleLoop.stop(0).dispose();
-            if (Tone.Transport.state === 'started') Tone.Transport.stop();
-        }
-        function playNovaSound() { if (novaSynth) novaSynth.triggerAttack(); }
-        function playWinnerSound() {
-            if (!synth) return;
-            const now = Tone.now();
-            synth.triggerAttackRelease("C5", "8n", now);
-            synth.triggerAttackRelease("E5", "8n", now + 0.15);
-            synth.triggerAttackRelease("G5", "8n", now + 0.3);
-            synth.triggerAttackRelease("C6", "4n", now + 0.45);
-        }
-
-        // --- Confetti ---
-        function createConfetti() {
-            confettiContainer.innerHTML = '';
-            const colors = ['#60a5fa', '#a78bfa', '#f472b6', '#fbbf24', '#4ade80'];
-            for (let i = 0; i < 150; i++) {
-                const confetti = document.createElement('div');
-                confetti.classList.add('confetti');
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.top = -20 + 'px';
-                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.animationDelay = Math.random() * 2 + 's';
-                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
-                confettiContainer.appendChild(confetti);
-            }
-        }
-        function clearConfetti() { confettiContainer.innerHTML = ''; }
-        
-        // --- Error Handling ---
-        function showError(message) { errorText.textContent = message; errorMessage.classList.remove('hidden'); }
-        function hideError() { errorMessage.classList.add('hidden'); }
-
-        // --- Supernova Animation Logic ---
-        function startSupernovaAnimation(names, newWinners) {
-            animationContainer.classList.add('active');
-            playAmbientSound();
-            
-            const ctx = animationCanvas.getContext('2d');
-            const dpr = window.devicePixelRatio || 1;
-            animationCanvas.width = animationContainer.clientWidth * dpr;
-            animationCanvas.height = animationContainer.clientHeight * dpr;
-            ctx.scale(dpr, dpr);
-            const W = animationContainer.clientWidth;
-            const H = animationContainer.clientHeight;
-            const centerX = W / 2;
-            const centerY = H / 2;
-
-            let particles = [];
-            class Particle {
-                constructor() {
-                    this.x = Math.random() * W; this.y = Math.random() * H;
-                    this.vx = 0; this.vy = 0;
-                    this.radius = Math.random() * 2 + 1;
-                    this.phase = 'scatter'; this.life = 0;
-                }
-                update() {
-                    this.life++;
-                    const dx = centerX - this.x; const dy = centerY - this.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
-                    if (this.phase === 'scatter') { if (this.life > 100) this.phase = 'pull';
-                    } else if (this.phase === 'pull') {
-                        this.vx += dx / dist * 0.1; this.vy += dy / dist * 0.1;
-                        if (this.life > 240) this.phase = 'swirl';
-                    } else if (this.phase === 'swirl') {
-                        this.vx += dx / dist * 0.1 + -dy / dist * 0.2;
-                        this.vy += dy / dist * 0.1 + dx / dist * 0.2;
-                        if (this.life > 360) this.phase = 'converge';
-                    } else if (this.phase === 'converge') {
-                        this.vx += dx * 0.01; this.vy += dy * 0.01;
-                    }
-                    this.vx *= 0.96; this.vy *= 0.96;
-                    this.x += this.vx; this.y += this.vy;
-                }
-                draw() {
-                    ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                    ctx.fillStyle = 'white'; ctx.fill();
-                }
-            }
-
-            for(let i = 0; i < 300; i++) particles.push(new Particle());
-            let animationFrame = 0;
-            let runningName = '';
-            let frameCounterForNameChange = 0;
-
-            function animate() {
-                ctx.fillStyle = 'rgba(9, 10, 15, 0.1)';
-                ctx.fillRect(0, 0, W, H);
-                particles.forEach(p => { p.update(); p.draw(); });
-
-                if (animationFrame < 480) { 
-                    frameCounterForNameChange++;
-                    if (frameCounterForNameChange >= 3) {
-                         runningName = names[Math.floor(Math.random() * names.length)];
-                         frameCounterForNameChange = 0;
-                    }
-                    if (runningName) {
-                        ctx.shadowColor = '#eab308'; ctx.shadowBlur = 15;
-                        ctx.fillStyle = '#fde047';
-                        const runningFontSize = Math.min(W, H) * 0.08;
-                        ctx.font = `700 ${runningFontSize}px Kanit`;
-                        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                        ctx.fillText(runningName, centerX, centerY);
-                        ctx.shadowBlur = 0;
-                    }
-                }
+                // เปิดกล้อง
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: 640, height: 480 } 
+                });
+                videoElement.srcObject = cameraStream;
                 
-                animationFrame++;
-                if (animationFrame < 480) {
-                    mainAnimationId = requestAnimationFrame(animate);
-                } else {
-                    stopAmbientSound(); playNovaSound();
-                    
-                    let novaRadius = 0;
-                    const novaInterval = setInterval(() => {
-                        ctx.fillStyle = `rgba(255, 255, 255, ${1 - novaRadius / (W/2)})`;
-                        ctx.beginPath(); ctx.arc(centerX, centerY, novaRadius, 0, Math.PI * 2); ctx.fill();
-                        novaRadius += 25;
-                        if (novaRadius > W) {
-                            clearInterval(novaInterval);
-                            revealWinner(newWinners);
-                        }
-                    }, 16);
-                }
-            }
-            animate();
-        }
-
-        /**
-         * MODIFIED FUNCTION: This function now displays all winner names,
-         * adjusting font size to fit them all on the screen.
-         */
-        function revealWinner(newWinners) {
-            const W = animationCanvas.clientWidth;
-            const H = animationCanvas.clientHeight;
-            const centerX = W / 2;
-            const centerY = H / 2;
-            const ctx = animationCanvas.getContext('2d');
-            
-            let revealFrame = 0;
-            let shockwaveRadius = 0;
-            let shockwaveOpacity = 1;
-
-            function revealLoop() {
-                ctx.fillStyle = '#090a0f';
-                ctx.fillRect(0, 0, W, H);
-
-                // Draw background rays
-                const rays = 60;
-                for (let i = 0; i < rays; i++) {
-                    ctx.beginPath();
-                    ctx.strokeStyle = `hsla(260, 100%, 80%, ${Math.max(0, 0.3 * Math.sin(revealFrame * 0.02 + (i / rays) * Math.PI))})`;
-                    ctx.moveTo(centerX, centerY);
-                    const angle = (i / rays) * Math.PI * 2 + revealFrame * 0.005;
-                    ctx.lineTo(centerX + Math.cos(angle) * W, centerY + Math.sin(angle) * H);
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                }
-
-                // Draw expanding shockwave
-                if (shockwaveOpacity > 0) {
-                    ctx.beginPath();
-                    ctx.strokeStyle = `rgba(255, 255, 255, ${shockwaveOpacity})`;
-                    ctx.lineWidth = 5;
-                    ctx.arc(centerX, centerY, shockwaveRadius, 0, Math.PI * 2);
-                    ctx.stroke();
-                    shockwaveRadius += 5;
-                    shockwaveOpacity -= 0.01;
-                }
-
-                // --- START: MODIFIED NAME DISPLAY LOGIC ---
-
-                // 1. Find the longest name to determine width constraints.
-                const longestName = newWinners.reduce((a, b) => (a.length > b.length ? a : b), "");
-                
-                // 2. Start with a reasonable font size.
-                let finalFontSize = H * 0.2; 
-
-                // 3. Loop to shrink the font size until it fits both width and height constraints.
-                while (finalFontSize > 10) {
-                    ctx.font = `900 ${finalFontSize}px Kanit`;
-                    const textWidth = ctx.measureText(longestName).width;
-                    const totalTextHeight = newWinners.length * (finalFontSize * 1.2); // 1.2 provides line spacing
-
-                    if (textWidth < W * 0.9 && totalTextHeight < H * 0.9) {
-                        break; // The font size is good, so we exit the loop.
-                    }
-                    finalFontSize *= 0.95; // Reduce font size and check again.
-                }
-
-                // 4. Set text styles.
-                ctx.fillStyle = '#fde047';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.shadowColor = '#f59e0b';
-                ctx.shadowBlur = 40;
-
-                // 5. Calculate the starting Y position to vertically center the block of names.
-                const lineHeight = finalFontSize * 1.2;
-                const totalHeight = (newWinners.length - 1) * lineHeight;
-                const startY = centerY - totalHeight / 2;
-
-                // 6. Draw each winner's name on a new line.
-                newWinners.forEach((name, index) => {
-                    ctx.fillText(name, centerX, startY + (index * lineHeight));
+                await new Promise((resolve) => {
+                    videoElement.onloadedmetadata = () => {
+                        videoElement.play();
+                        resolve();
+                    };
                 });
 
-                ctx.shadowBlur = 0;
-                // --- END: MODIFIED NAME DISPLAY LOGIC ---
-
-                revealFrame++;
-                mainAnimationId = requestAnimationFrame(revealLoop);
+                // โหลดโมเดล MoveNet แบบ MultiPose (รองรับหลายคนพร้อมกัน)
+                await tf.setBackend('webgl');
+                await tf.ready();
+                
+                const detectorConfig = {
+                    modelType: poseDetection.movenet.modelType.MULTIPOSE_LIGHTNING,
+                    enableTracking: true, // ติดตาม ID ของแต่ละคน
+                    trackerType: poseDetection.TrackerType.BoundingBox
+                };
+                detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
+                
+                startGame();
+            } catch (err) {
+                console.error(err);
+                alert("ไม่สามารถเปิดกล้องหรือโหลด AI ได้ กรุณาอนุญาตการใช้งานกล้องและลองใหม่อีกครั้ง");
+                showView('view-start');
             }
+        }
+
+        // --- 5. Game Loop (Timer & Tracking Loop) ---
+        function startGame() {
+            showView('view-dance');
             
-            playWinnerSound();
-            revealLoop();
-            // Increased timeout to 5 seconds to give more time to read the names.
-            setTimeout(() => endRandomization(newWinners), 5000);
-        }
+            // Adjust canvas size to match video
+            canvasElement.width = videoElement.videoWidth || 640;
+            canvasElement.height = videoElement.videoHeight || 480;
 
-        function endRandomization(newWinners) {
-            cancelAnimationFrame(mainAnimationId);
-            animationContainer.classList.remove('active');
-            createConfetti();
+            currentDanceTime = 0;
+            gameActive = true;
+            isMoving = false;
+            previousPoses = [];
+            lastTimestamp = performance.now();
             
-            winners = [...winners, ...newWinners];
-            remainingParticipants = participants.filter(p => !winners.includes(p));
-
-            updateWinnerGallery();
-            drawScreen.classList.add('hidden');
-            winnerGallerySection.classList.remove('hidden');
+            requestAnimationFrame(gameLoop);
+            detectPoseLoop(); // เริ่มลูปตรวจจับ AI แยกต่างหาก
         }
 
-        function updateWinnerGallery() {
-            winnerGallery.innerHTML = '';
-            winners.forEach((winner, index) => {
-                const card = document.createElement('div');
-                card.className = 'winner-card';
-                card.style.animationDelay = `${index * 0.15}s`;
-                card.innerHTML = `
-                    <div class="winner-rank">${index + 1}</div>
-                    <div class="winner-name">${winner}</div>
-                `;
-                winnerGallery.appendChild(card);
-            });
-        }
-        
-        function shuffleArray(array) {
-            let currentIndex = array.length, randomIndex;
-            while (currentIndex !== 0) {
-                randomIndex = Math.floor(Math.random() * currentIndex);
-                currentIndex--;
-                [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+        async function detectPoseLoop() {
+            if (!gameActive) return;
+
+            try {
+                const poses = await detector.estimatePoses(videoElement);
+                
+                canvasCtx.save();
+                canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+                
+                // Mirror image
+                canvasCtx.translate(canvasElement.width, 0);
+                canvasCtx.scale(-1, 1);
+                canvasCtx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+                let totalMovement = 0;
+
+                if (poses && poses.length > 0) {
+                    poses.forEach(pose => {
+                        // วาดเส้นกระดูก (Skeleton) สำหรับทุกคน
+                        const adjacentPairs = poseDetection.util.getAdjacentPairs(poseDetection.SupportedModels.MoveNet);
+                        adjacentPairs.forEach(([i, j]) => {
+                            const kp1 = pose.keypoints[i];
+                            const kp2 = pose.keypoints[j];
+                            if (kp1.score > 0.3 && kp2.score > 0.3) {
+                                canvasCtx.beginPath();
+                                canvasCtx.moveTo(kp1.x, kp1.y);
+                                canvasCtx.lineTo(kp2.x, kp2.y);
+                                canvasCtx.strokeStyle = '#fff';
+                                canvasCtx.lineWidth = 4;
+                                canvasCtx.stroke();
+                            }
+                        });
+
+                        // วาดจุดข้อต่อ (Keypoints)
+                        pose.keypoints.forEach(kp => {
+                            if (kp.score > 0.3) {
+                                canvasCtx.beginPath();
+                                canvasCtx.arc(kp.x, kp.y, 4, 0, 2 * Math.PI);
+                                canvasCtx.fillStyle = '#ec4899';
+                                canvasCtx.fill();
+                            }
+                        });
+
+                        // คำนวณการเคลื่อนไหว (โดยเช็คจาก ID ของคนที่ตรวจจับได้)
+                        const prevPose = previousPoses.find(p => p.id === pose.id);
+                        if (prevPose) {
+                            // เช็คการขยับของ ข้อศอก(7,8) ข้อมือ(9,10) และข้อเท้า(15,16)
+                            const checkPoints = [7, 8, 9, 10, 15, 16];
+                            checkPoints.forEach(idx => {
+                                const prev = prevPose.keypoints[idx];
+                                const curr = pose.keypoints[idx];
+                                if (prev && curr && prev.score > 0.3 && curr.score > 0.3) {
+                                    const dx = curr.x - prev.x;
+                                    const dy = curr.y - prev.y;
+                                    totalMovement += Math.sqrt(dx*dx + dy*dy);
+                                }
+                            });
+                        }
+                    });
+                    
+                    // หากมีใครสักคนขยับแรงพอ หรือหลายคนขยับรวมกัน จะถือว่ากำลังเต้นอยู่
+                    if (totalMovement > 25) { 
+                        isMoving = true;
+                    } else {
+                        isMoving = false;
+                    }
+                    
+                    previousPoses = poses;
+                } else {
+                    isMoving = false;
+                }
+                canvasCtx.restore();
+
+            } catch (error) {
+                console.error("Pose detection error:", error);
             }
-            return array;
+
+            if (gameActive) {
+                requestAnimationFrame(detectPoseLoop);
+            }
         }
 
-        // --- Event Listeners ---
-        nextButton.addEventListener('click', () => {
-            hideError();
-            const namesText = participantsListInput.value.trim();
-            if (!namesText) { showError("กรุณาวางรายชื่อผู้เข้าร่วม"); return; }
-            participants = [...new Set(namesText.split('\n').map(name => name.trim()).filter(Boolean))];
-            if (participants.length === 0) { showError("ไม่พบรายชื่อที่ถูกต้อง"); return; }
-            
-            remainingParticipants = [...participants];
-            winners = [];
-            winnerGallery.innerHTML = '';
-            winnerGallerySection.classList.add('hidden');
+        function gameLoop(timestamp) {
+            if (!gameActive) return;
 
-            participantCountEl.textContent = remainingParticipants.length;
-            setupScreen.classList.add('hidden');
-            drawScreen.classList.remove('hidden');
-        });
+            const deltaTime = (timestamp - lastTimestamp) / 1000; // in seconds
+            lastTimestamp = timestamp;
 
-        startButton.addEventListener('click', async () => {
-            if (Tone.context.state !== 'running') {
-                await Tone.start();
+            if (isMoving) {
+                currentDanceTime += deltaTime;
+                danceStatusIcon.innerText = "🔥";
+                danceStatusText.innerText = "พลังกลุ่มกำลังพุ่ง! ชาร์จ...";
+                danceStatusText.classList.replace('text-gray-700', 'text-pink-600');
+                shuffleCard.classList.add('shake-active');
+            } else {
+                danceStatusIcon.innerText = "🛑";
+                danceStatusText.innerText = "ทุกคนขยับตัวหน่อย! เวลาหยุดนะ";
+                danceStatusText.classList.replace('text-pink-600', 'text-gray-700');
+                shuffleCard.classList.remove('shake-active');
             }
-            hideError();
+
+            // Cap the time
+            if (currentDanceTime >= DANCE_TARGET_TIME) {
+                currentDanceTime = DANCE_TARGET_TIME;
+                gameActive = false;
+                shuffleCard.classList.remove('shake-active');
+                drawCardResult(); // Finish!
+            }
+
+            updateUI();
+
+            if (gameActive) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function updateUI() {
+            // Update time left text
+            const timeLeft = Math.max(0, DANCE_TARGET_TIME - currentDanceTime);
+            timeDisplay.innerText = timeLeft.toFixed(1);
+
+            // Update Progress bar (0 to 100%)
+            const progressPercent = (currentDanceTime / DANCE_TARGET_TIME) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+        }
+
+        // --- 6. Result Phase ---
+        function drawCardResult() {
+            // Random a card
+            const randomIndex = Math.floor(Math.random() * tarotCards.length);
+            const drawnCard = tarotCards[randomIndex];
+
+            // Set Data
+            document.getElementById('result-icon').innerText = drawnCard.icon;
+            document.getElementById('result-name').innerText = drawnCard.name;
+            document.getElementById('result-rule').innerText = drawnCard.rule;
+
+            showView('view-result');
             
-            const winnerCount = parseInt(winnerCountInput.value, 10);
-            if (isNaN(winnerCount) || winnerCount <= 0) { showError("จำนวนผู้โชคดีต้องเป็น 1 คนขึ้นไป"); return; }
-            if (winnerCount > remainingParticipants.length) { showError(`จำนวนผู้โชคดี (${winnerCount}) มากกว่ารายชื่อที่เหลือ (${remainingParticipants.length})`); return; }
-
-            const shuffled = shuffleArray([...remainingParticipants]);
-            const newWinners = shuffled.slice(0, winnerCount);
-
-            drawScreen.classList.add('hidden');
-            winnerGallerySection.classList.add('hidden');
-            startSupernovaAnimation(remainingParticipants, newWinners);
-        });
-
-        restartButton.addEventListener('click', () => {
-            winnerGallerySection.classList.add('hidden');
-            drawScreen.classList.remove('hidden');
-            clearConfetti();
-            hideError();
-            participantCountEl.textContent = remainingParticipants.length;
-        });
-
-        startOverButton.addEventListener('click', () => {
-            drawScreen.classList.add('hidden');
-            winnerGallerySection.classList.add('hidden');
-            winnerGallery.innerHTML = '';
+            // Reset Flip State
+            const resultCardInner = document.getElementById('result-card-inner');
+            resultCardInner.classList.remove('flipped');
             
-            if (mainAnimationId) cancelAnimationFrame(mainAnimationId);
-            stopAmbientSound();
-            clearConfetti();
+            // Small delay then flip the card automatically for excitement
+            setTimeout(() => {
+                resultCardInner.classList.add('flipped');
+            }, 500);
+        }
 
-            setupScreen.classList.remove('hidden');
-            participants = [];
-            remainingParticipants = [];
-            winners = [];
-            participantsListInput.value = '';
-            winnerCountInput.value = '1';
-            hideError();
+        // --- 7. Event Listeners ---
+        document.getElementById('btn-start').addEventListener('click', () => {
+            initializeAI();
         });
 
-        // --- Initial setup ---
-        setupSynths();
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            // Reset and start again directly
+            currentDanceTime = 0;
+            updateUI();
+            startGame();
+        });
+
     </script>
 </body>
 </html>
